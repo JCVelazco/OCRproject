@@ -170,32 +170,6 @@ def objectFinder(img,tag,i,j,objFnd,depthCounter,limit):
 
     return objFnd, depthCounter
 
-def objTag(img):
-    img = np.pad(img,1,'constant', constant_values=(0,0)) #Padding
-    h,w = img.shape
-    objMtx = np.zeros((h,w)) #Matriz para mapeado de objetos
-
-    objCount = 1 #Cuenta para llevar la asignación de numero de objeto
-
-    for i in range(h):
-        for j in range(w):
-            if(img[i,j] > 0): #PIXEL ACTIVO
-            #Checar los vecinos. El primer vecino encontrado será del que agarre el tag de objeto.
-                if(objMtx[i-1,j] != 0):
-                    objMtx[i,j] = objMtx[i-1,j]
-                elif(objMtx[i-1,j-1] != 0):
-                    objMtx[i,j] = objMtx[i-1,j-1]
-                elif(objMtx[i-1,j+1] != 0):
-                    objMtx[i,j] = objMtx[i-1,j+1]
-                elif(objMtx[i,j-1] != 0):
-                    objMtx[i,j] = objMtx[i,j-1]
-                else:
-                    #Si no tiene vecinos nombrados, se le dará un nuevo tag de objeto
-                    objMtx[i,j] = objCount
-                    objCount = objCount + 1
-    objMtx = getImgBk(objMtx,3)
-
-    return objMtx, objCount-1
 
 def boxing(objMtx,objNums):
     h,w = objMtx.shape
