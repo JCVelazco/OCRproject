@@ -4,6 +4,14 @@ from matplotlib import pyplot as pltform
 import random
 import time
 import math
+class MyClass(object):
+    def __init__(self, number,xmin,xmax,ymin,ymax):
+        self.number = number
+        self.xmin = xmin
+        self.xmax = xmax
+        self.ymin = ymin
+        self.ymax = ymax
+
 
     ######################Binarizacion de imagen#####################
 
@@ -205,6 +213,13 @@ def boxCleaning(boxesLst,img):
 
     return realBoxes #esto quita casos extraños donde se apuntaba a posiciones extrañas de la imagen.
 
+def POOtransition(boxesLst):
+    len,w = boxesLst.shape
+    cajas = []
+    for i in range(len):
+        cajas.append(MyClass(i,int(boxesLst[i,2]),int(boxesLst[i,3]),int(boxesLst[i,0]),int(boxesLst[i,1])))
+    return cajas
+
 ######################Efectos visuales#####################
 
 def rgbObjColor(objMtx,objCount):
@@ -226,17 +241,17 @@ def rgbObjColor(objMtx,objCount):
 
     return imgF
 
-def DrawSq(img,boxesLst):
-    l = len(boxesLst)
+def DrawSq(img,cajas):
+    l = len(cajas)
     l = int(l)
     h,w,z = img.shape
     a = l
     color = (0,255,0)
     for i in range(a):
-        p1 = (int(boxesLst[i,2]), int(boxesLst[i,0]))#Noreste
-        p2 = (int(boxesLst[i,3]), int(boxesLst[i,0]))#Noroesste
-        p3 = (int(boxesLst[i,2]), int(boxesLst[i,1]))#Sureste
-        p4 = (int(boxesLst[i,3]), int(boxesLst[i,1]))#Suroeste
+        p1 = (cajas[i].xmin, cajas[i].ymin)#Noreste
+        p2 = (cajas[i].xmax, cajas[i].ymin)#Noroesste
+        p3 = (cajas[i].xmin, cajas[i].ymax)#Sureste
+        p4 = (cajas[i].xmax, cajas[i].ymax)#Suroeste
         img = cv2.line(img, p1,p2 , color, 1)
         img = cv2.line(img, p1,p3 , color, 1)
         img = cv2.line(img, p2,p4 , color, 1)

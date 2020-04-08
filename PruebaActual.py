@@ -5,6 +5,13 @@ import time
 import sys
 import matplotlib.pyplot as plt
 sys.setrecursionlimit(350000)
+class MyClass(object):
+    def __init__(self, number,xmin,xmax,ymin,ymax):
+        self.number = number
+        self.xmin = xmin
+        self.xmax = xmax
+        self.ymin = ymin
+        self.ymax = ymax
 
 start_time = time.time()
 
@@ -34,14 +41,22 @@ boxesLst = udF2.boxing(objMtx, nObj)
 boxesLst = udF2.boxCleaning(boxesLst,img1)
 print("Boxing done")
 print("--- %s seconds ---" % (time.time() - start_time))
-objNum,w = boxesLst.shape #esto da el nuevo numero de objetos
+
+            #transición a POO
+cajas = udF2.POOtransition(boxesLst)
+objNum = len(cajas) #esto da el nuevo numero de objetos
+
+######################################### Aclaración: ###############################################
+# Cajas es donde se pondrán todas las características de las letras (es un object list)
+#  objMatrix es una matriz del tamaño de la imagen original, donde se tienen el mapeo de los OBJETOS
+#####################################################################################################
 
     #Efectos visuales
 imgColored = udF2.rgbObjColor(objMtx,objNum)
 print("Coloring done")
 print("--- %s seconds ---" % (time.time() - start_time))
 
-imgSq = udF2.DrawSq(imgColored,boxesLst)
+imgSq = udF2.DrawSq(imgColored,cajas)
 print("Square drawing done")
 print("--- %s seconds ---" % (time.time() - start_time))
 
