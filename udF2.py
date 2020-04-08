@@ -168,8 +168,7 @@ def objectFinder(img,tag,i,j,objFnd,depthCounter,limit):
         objFnd,depthCounter = objectFinder(img,tag,i-1,j-1,objFnd,depthCounter,limit)
     depthCounter = depthCounter - 1
 
-    return objFnd, depthCounter
-
+    return objFnd, depthCounter #subFunción de objSrch2
 
 def boxing(objMtx,objNums):
     h,w = objMtx.shape
@@ -204,7 +203,7 @@ def boxCleaning(boxesLst,img):
                 realBoxes[cE,3] = boxesLst[i,3]
                 cE = cE + 1
 
-    return realBoxes
+    return realBoxes #esto quita casos extraños donde se apuntaba a posiciones extrañas de la imagen.
 
 ######################Efectos visuales#####################
 
