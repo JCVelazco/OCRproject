@@ -34,10 +34,10 @@ boxesLst = udF2.boxing(objMtx, nObj)
 boxesLst = udF2.boxCleaning(boxesLst,img1)
 print("Boxing done")
 print("--- %s seconds ---" % (time.time() - start_time))
+objNum,w = boxesLst.shape #esto da el nuevo numero de objetos
 
     #Efectos visuales
-h,w = boxesLst.shape #esto da el nuevo numero de objetos
-imgColored = udF2.rgbObjColor(objMtx,h)
+imgColored = udF2.rgbObjColor(objMtx,objNum)
 print("Coloring done")
 print("--- %s seconds ---" % (time.time() - start_time))
 
