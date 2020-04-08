@@ -1,8 +1,9 @@
 import numpy as np
 import cv2
-from matplotlib import pyplot as pltform
 import random
 import time
+import math
+    ######################Binarizacion de imagen#####################
 
 def avgF(img, ventana):
     new_image = cv2.blur(img,(ventana, ventana))
@@ -16,6 +17,10 @@ def imgRS(img, factor):
     dim = (width, height)
     resized = cv2.resize(img, dim, interpolation = cv2.INTER_AREA)
     return resized
+
+def wolf(img, blockSize, k):
+    result = cv2.ximgproc.niBlackThreshold(img, 255, cv2.THRESH_BINARY_INV, blockSize, k, binarizationMethod=cv2.ximgproc.BINARIZATION_WOLF)
+    return result
 
 def niblack(img, ventana, k):
     rad = int((ventana-1)/2)
@@ -41,6 +46,7 @@ def niblack(img, ventana, k):
 
     return resultado
 
+
 def invert(img):
     h,w= img.shape
     resultado = np.zeros((h,w))
@@ -51,7 +57,13 @@ def invert(img):
             else:
                 resultado[i,j] = 255
 
+
     return resultado
+
+def invert_v2(img):
+    img = (255-img)
+    return img
+
 
 def getImgBk(img,ventana):
     h,w= img.shape
@@ -66,6 +78,37 @@ def getImgBk(img,ventana):
                 imgA[i-rad][j-rad] = img[i,j]
 
     return imgA
+
+def cincoNiblack(img):
+
+    winSize = 5
+    img1 = niblack(img, winSize, -2)
+    img1 = invert(img1)
+    img1 = getImgBk(img1, winSize)
+
+    winSize = 17
+    img2 = niblack(img, winSize, -2)
+    img2 = invert(img2)
+    img2 = getImgBk(img2, winSize)
+
+    winSize = 37
+    img3 = niblack(img, winSize, -2)
+    img3 = invert(img3)
+    img3 = getImgBk(img3, winSize)
+
+    winSize = 65
+    img4 = niblack(img, winSize, -2)
+    img4 = invert(img4)
+    img4 = getImgBk(img4, winSize)
+
+    winSize = 257
+    img5 = niblack(img, winSize, -2)# start_time = time.time()
+    img5 = invert(img5)
+    img5 = getImgBk(img5,winSize)
+
+    imgF = imgSynth(img1,img2,img3,img4,img5)
+
+    return imgF
 
 def imgSynth(img1,img2,img3,img4,img5):
     h,w= img5.shape
@@ -88,12 +131,14 @@ def imgSynth(img1,img2,img3,img4,img5):
 
     return imgF
 
+######################Busqueda de objetos y caracteristicas#####################
+
 def objSrch2(img):
     img = np.pad(img,1,'constant', constant_values=(0,0)) #Padding
     h,w = img.shape
     objectCount = 1
     depthCounter = 0
-    limit = 10000
+    limit = 3000
     objMtx = np.zeros((h,w)) #Matriz para mapeado de objetos
     for i in range(h):
         for j in range(w):
@@ -101,6 +146,7 @@ def objSrch2(img):
                 depthCounter = 0
                 objMtx, depthCounter = objectFinder(img,objectCount,i,j,objMtx,depthCounter,limit)
                 objectCount = objectCount + 1
+
     return objMtx, objectCount
 
 def objectFinder(img,tag,i,j,objFnd,depthCounter,limit):
@@ -131,8 +177,6 @@ def objTag(img):
     img = np.pad(img,1,'constant', constant_values=(0,0)) #Padding
     h,w = img.shape
     objMtx = np.zeros((h,w)) #Matriz para mapeado de objetos
-
-    #Recordar quitar el padding de todas las matrices (img, objMtx y ObjFnd)
 
     objCount = 1 #Cuenta para llevar la asignación de numero de objeto
 
@@ -177,36 +221,38 @@ def boxing(objMtx,objNums):
 
     return objsBxd
 
-def cincoNiblack(img):
+def boxCleaning(boxesLst,img):
+    h,w = img.shape
+    a,b = boxesLst.shape
+    realBoxes = np.zeros((a,b))
+    cE = 0 #contador extra
+    for i in range(a):
+        if(boxesLst[i,2] < w and boxesLst[i,3] < w and boxesLst[i,0] < h and boxesLst[i,1] < h ): #Que no se pase arriba
+            if(boxesLst[i,2] >0 and boxesLst[i,3] >0 and boxesLst[i,0] >0 and boxesLst[i,1] >0 ): #que no se pase abajo
+                realBoxes[cE,0] = boxesLst[i,0]
+                realBoxes[cE,1] = boxesLst[i,1]
+                realBoxes[cE,2] = boxesLst[i,2]
+                realBoxes[cE,3] = boxesLst[i,3]
+                cE = cE + 1
 
-    winSize = 5
-    img1 = niblack(img, winSize, -2)
-    img1 = invert(img1)
-    img1 = getImgBk(img1, winSize)
+    return realBoxes
 
-    winSize = 17
-    img2 = niblack(img, winSize, -2)
-    img2 = invert(img2)
-    img2 = getImgBk(img2, winSize)
 
-    winSize = 37
-    img3 = niblack(img, winSize, -2)
-    img3 = invert(img3)
-    img3 = getImgBk(img3, winSize)
+def remove_noicy_boxes(list_boxes):
+    widthSizes = [abs(element[1] - element[0]) for element in list_boxes] 
+    heighSizes = [abs(element[3] - element[2]) for element in list_boxes] 
+    medianX = np.median(widthSizes)
+    medianY = np.median(heighSizes)
+    desvEstandartX = math.sqrt(np.std(widthSizes))
+    desvEstandartY = math.sqrt(np.std(heighSizes))
 
-    winSize = 65
-    img4 = niblack(img, winSize, -2)
-    img4 = invert(img4)
-    img4 = getImgBk(img4, winSize)
+    print("DesvX ", desvEstandartX)
+    print("MedianX ", medianX)
 
-    winSize = 257
-    img5 = niblack(img, winSize, -2)# start_time = time.time()
-    img5 = invert(img5)
-    img5 = getImgBk(img5,winSize)
+    return [list_boxes[index] for index in range(len(list_boxes)) if (abs(medianX-widthSizes[index]) <= desvEstandartX*2 and abs(medianY-heighSizes[index]) <= desvEstandartY*2)]
 
-    imgF = imgSynth(img1,img2,img3,img4,img5)
 
-    return imgF
+######################Efectos visuales#####################
 
 def rgbObjColor(objMtx,objCount):
     h,w = objMtx.shape
@@ -234,20 +280,27 @@ def DrawSq(img,boxesLst):
     l = len(boxesLst)
     l = int(l)
     h,w,z = img.shape
-    print("",l)
+    print("eleeee",l)
+
     a = l-1
     color = (0,255,0)
     for i in range(a):
         if(i > 0):
-            if(boxesLst[i,2] < h and boxesLst[i,3] < h and boxesLst[i,0] < w and boxesLst[i,1] < w ):
-                if(boxesLst[i,2] >0 and boxesLst[i,3] >0 and boxesLst[i,0] >0 and boxesLst[i,1] >0 ):
-                    p1 = (int(boxesLst[i,2]), int(boxesLst[i,0]))#Noreste
-                    p2 = (int(boxesLst[i,3]), int(boxesLst[i,0]))#Noroesste
-                    p3 = (int(boxesLst[i,2]), int(boxesLst[i,1]))#Sureste
-                    p4 = (int(boxesLst[i,3]), int(boxesLst[i,1]))#Suroeste
+            if(boxesLst[i][2] < w and boxesLst[i][3] < w and boxesLst[i][0] < h and boxesLst[i][1] < h ):
+                if(boxesLst[i][2] >0 and boxesLst[i][3] >0 and boxesLst[i][0] >0 and boxesLst[i][1] >0 ):
+                    p1 = (int(boxesLst[i][2]), int(boxesLst[i][0]))#Noreste
+                    p2 = (int(boxesLst[i][3]), int(boxesLst[i][0]))#Noroesste
+                    p3 = (int(boxesLst[i][2]), int(boxesLst[i][1]))#Sureste
+                    p4 = (int(boxesLst[i][3]), int(boxesLst[i][1]))#Suroeste
                     img = cv2.line(img, p1,p2 , color, 1)
                     img = cv2.line(img, p1,p3 , color, 1)
                     img = cv2.line(img, p2,p4 , color, 1)
                     img = cv2.line(img, p3,p4 , color, 1)
 
     return img
+
+def show_image(img, name): 
+    cv2.imshow(str(name), img)
+    print("Click any key for next computation...")
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
