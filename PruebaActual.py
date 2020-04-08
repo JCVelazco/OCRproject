@@ -5,13 +5,6 @@ import time
 import sys
 import matplotlib.pyplot as plt
 sys.setrecursionlimit(350000)
-class MyClass(object):
-    def __init__(self, number,xmin,xmax,ymin,ymax):
-        self.number = number
-        self.xmin = xmin
-        self.xmax = xmax
-        self.ymin = ymin
-        self.ymax = ymax
 
 start_time = time.time()
 
