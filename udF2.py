@@ -15,6 +15,8 @@ class MyClass(object):
 
     ######################Binarizacion de imagen#####################
 
+###################### Binarización de la imagen #####################
+
 def avgF(img, ventana):
     new_image = cv2.blur(img,(ventana, ventana))
     return new_image
