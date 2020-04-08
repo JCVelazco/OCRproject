@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-import udF2
+import udF
 import time
 import sys
 import matplotlib.pyplot as plt
@@ -10,34 +10,43 @@ start_time = time.time()
 
     #-Obtención de la imagen de prueba
 
-img = cv2.imread('/home/david/Escritorio/ImagenesPrueba/Texto Luz Calida.jpg',0)
-img = udF2.imgRS(img,0.5) #Este resize está solo para hacer más rápidas las pruebas.
+img = cv2.imread('/home/david/Escritorio/Texto Luz Blanca.jpg',0)
+img = udF.imgRS(img,0.5) #Este resize está solo para hacer más rápidas las pruebas.
 
     #-Binarización de la Imagen
 
-img1 = udF2.unNiblack(img)
-#img1 = udF2.cincoNiblack(img)
-print("Niblack done")
+#img1 = udF.unNiblack(img)
+#img1 = udF.cincoNiblack(img)
+img1 = udF.wolf(img, 127, 0.2)
+#udF.show_image(img1, "wolf")
+print("Binarization done")
 print("--- %s seconds ---" % (time.time() - start_time))
 
     #Busqueda de objetos y propiedades
         #Busqueda de regiones en la imagen
 
-objMtx, nObj = udF2.objSrch2(img1)
+objMtx, nObj = udF.objSrch2(img1)
 print("N de objetos encontrados =",nObj)
 print("objTag done")
 print("--- %s seconds ---" % (time.time() - start_time))
 
         #Boxing de OBJETOS
 
-boxesLst = udF2.boxing(objMtx, nObj)
-boxesLst = udF2.boxCleaning(boxesLst,img1)
+boxesLst = udF.boxing(objMtx, nObj)
+boxesLst = udF.boxCleaning(boxesLst,img1)
 print("Boxing done")
 print("--- %s seconds ---" % (time.time() - start_time))
 
+        #Formación de líneas de texto
+groupedBoxes = udF.gouping_boxes(boxesLst)
+
             #transición a POO
-cajas = udF2.POOtransition(boxesLst)
+cajas = udF.POOtransition(boxesLst)
+#cajas = udF.POOtransition4groupedBoxes(groupedBoxes) #esto es para cuando se usa la función grouping_boxes
+objMtx = udF.objMtxRW(objMtx,cajas)
 objNum = len(cajas) #esto da el nuevo numero de objetos
+print("POO transition done done")
+print("--- %s seconds ---" % (time.time() - start_time))
 
 ######################################### Aclaración: ###############################################
 # Cajas es donde se pondrán todas las características de las letras (es un object list)
@@ -45,11 +54,11 @@ objNum = len(cajas) #esto da el nuevo numero de objetos
 #####################################################################################################
 
     #Efectos visuales
-imgColored = udF2.rgbObjColor(objMtx,objNum)
+imgColored = udF.rgbObjColor(objMtx,objNum)
 print("Coloring done")
 print("--- %s seconds ---" % (time.time() - start_time))
 
-imgSq = udF2.DrawSq(imgColored,cajas)
+imgSq = udF.DrawSq(imgColored,cajas)
 print("Square drawing done")
 print("--- %s seconds ---" % (time.time() - start_time))
 
