@@ -235,6 +235,8 @@ def boxCleaning(boxesLst,img):
                 realBoxes[cE,3] = boxesLst[i,3]
                 cE = cE + 1
 
+    #delete all boxes where all its values are the same
+    realBoxes = [element for element in realBoxes if element[0] != element[1] or element[2] != element[3]]
     return realBoxes
 
 
@@ -251,6 +253,63 @@ def remove_noicy_boxes(list_boxes):
 
     return [list_boxes[index] for index in range(len(list_boxes)) if (abs(medianX-widthSizes[index]) <= desvEstandartX*2 and abs(medianY-heighSizes[index]) <= desvEstandartY*2)]
 
+
+# take ymin for sort
+def take_ymin(elem):
+    return elem[2]
+
+def get_line_box_sections(list_boxes):
+    print("Y Mins:")
+    print(len(list_boxes))
+    print(type(list_boxes))
+
+    # sort by mid point between ymin and ymax values
+    sorted_boxes = sorted(list_boxes, key=lambda element: ((element[0]+element[1])/2)) 
+
+    #gap_distance = list((((sorted_boxes[index+1][2]+sorted_boxes[index+1][3])/2) - ((sorted_boxes[index][3]+sorted_boxes[index][2])/2)) for index in range(len(sorted_boxes) - 1))
+    #gap_dictionary = {element: gap_distance.count(element) for element in set(gap_distance)}
+    maxgap = 0.8
+    groups = [[sorted_boxes[0]]]
+
+    print(groups[-1][-1])
+    for element in sorted_boxes[1:]:
+        if abs(((element[0]+element[1])/2) - ((groups[-1][-1][0]+groups[-1][-1][1])/2)) <= maxgap:
+            groups[-1].append(element)
+        else:
+            groups.append([element])
+
+
+    # una vez teniendo los gropus junto todos sus boxes:
+    new_list_boxes = []
+    print(len(groups))
+    index  = 0
+    for group_items in groups:
+        ymin = group_items[0][0]
+        ymax = group_items[0][1]
+        xmin = group_items[0][2]
+        xmax = group_items[0][3] 
+        for group in group_items[1:]:
+            if group[0] < ymin:
+                ymin = group[0]
+            
+            if group[1] > ymax:
+                ymax = group[1]
+
+            if group[2] < xmin:
+                xmin = group[2]
+
+            if group[3] > xmax:
+                xmax = group[3] 
+        
+        new_list_boxes.append([ymin, ymax, xmin, xmax])
+        #print(new_list_boxes)
+
+    return new_list_boxes
+
+
+
+def gouping_boxes(list_boxes):
+    return get_line_box_sections(list_boxes)
 
 ######################Efectos visuales#####################
 
@@ -280,7 +339,6 @@ def DrawSq(img,boxesLst):
     l = len(boxesLst)
     l = int(l)
     h,w,z = img.shape
-    print("eleeee",l)
 
     a = l-1
     color = (0,255,0)

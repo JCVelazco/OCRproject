@@ -11,7 +11,7 @@ start_time = time.time()
 img = cv2.imread('ImagenesProyecto/Texto Luz Blanca.jpg',0)
 #img = cv2.imread('ImagenesProyecto/hola_como_estas.jpeg',0)
 #img = cv2.imread('ImagenesProyecto/texto_prueba.jpg',0)
-img = udF.imgRS(img,0.7) #Este resize está solo para hacer más rápidas las pruebas.
+img = udF.imgRS(img,0.2) #Este resize está solo para hacer más rápidas las pruebas.
 
 
 
@@ -35,19 +35,22 @@ imgColored = udF.rgbObjColor(objMtx,nObj)
 print("Coloring done")
 print("--- %s seconds ---" % (time.time() - start_time))
 
-udF.show_image(imgColored, "coloreada")
+#udF.show_image(imgColored, "coloreada")
 
 #Boxing de OBJETOS
 boxesLst = udF.boxing(objMtx, nObj)
-boxesLst = udF.boxCleaning(boxesLst,imgColored)
+boxesLst = udF.boxCleaning(boxesLst,threshold_img)
 print("Boxing done")
 print("--- %s seconds ---" % (time.time() - start_time))
 
 
 #remove Noicy Boxes
 #boxesLst = udF.remove_noicy_boxes(boxesLst)
+groupedBoxes = udF.gouping_boxes(boxesLst)
 
-imgColored = udF.DrawSq(imgColored,boxesLst)
+
+print(len(groupedBoxes))
+imgColored = udF.DrawSq(imgColored,groupedBoxes)
 print("Square drawing done")
 print("--- %s seconds ---" % (time.time() - start_time))
 
