@@ -240,76 +240,93 @@ def boxCleaning(boxesLst,img):
     return realBoxes
 
 
-def remove_noicy_boxes(list_boxes):
-    widthSizes = [abs(element[1] - element[0]) for element in list_boxes] 
-    heighSizes = [abs(element[3] - element[2]) for element in list_boxes] 
-    medianX = np.median(widthSizes)
-    medianY = np.median(heighSizes)
-    desvEstandartX = math.sqrt(np.std(widthSizes))
-    desvEstandartY = math.sqrt(np.std(heighSizes))
+def remove_noicy_boxes(list_boxes, width_check, heigh_check):
 
-    print("DesvX ", desvEstandartX)
-    print("MedianX ", medianX)
+    # delete all the ones that are less of the medium high/width
+    if width_check == True:
+        #remove large width objects
+        widthSizes = [abs(element[3] - element[2]) for element in list_boxes] 
+        medianX = np.median(widthSizes)
+        #desvEstandartX = math.sqrt(np.std(widthSizes))
+        list_boxes = [bounding_box for bounding_box in list_boxes if  abs(bounding_box[3] - bounding_box[2]) < medianX*20]
 
-    return [list_boxes[index] for index in range(len(list_boxes)) if (abs(medianX-widthSizes[index]) <= desvEstandartX*2 and abs(medianY-heighSizes[index]) <= desvEstandartY*2)]
+    if width_check == True:
+        #remove big and small heigh objects
+        heighSizes = [abs(element[1] - element[0]) for element in list_boxes] 
+        medianY = np.median(heighSizes)
+        #desvEstandartY = math.sqrt(np.std(heighSizes))
+        list_boxes = [bounding_box for bounding_box in list_boxes if abs(bounding_box[1] - bounding_box[0]) > medianY/2 and abs(bounding_box[1] - bounding_box[0]) < medianY*2]
+
+    heighSizes = [abs(element[1] - element[0]) for element in list_boxes] 
+    
+    return list_boxes
 
 
-# take ymin for sort
-def take_ymin(elem):
-    return elem[2]
 
-def get_line_box_sections(list_boxes):
-    print("Y Mins:")
-    print(len(list_boxes))
-    print(type(list_boxes))
+def grouping_boxes(list_boxes, img):
+    h, w, channels = img.shape
 
-    # sort by mid point between ymin and ymax values
+    list_boxes = remove_noicy_boxes(list_boxes, True, False)
+    
+    # sort by mid point between ymin 
     sorted_boxes = sorted(list_boxes, key=lambda element: ((element[0]+element[1])/2)) 
 
+    # todo fing a better way to get y_maxgap
     #gap_distance = list((((sorted_boxes[index+1][2]+sorted_boxes[index+1][3])/2) - ((sorted_boxes[index][3]+sorted_boxes[index][2])/2)) for index in range(len(sorted_boxes) - 1))
     #gap_dictionary = {element: gap_distance.count(element) for element in set(gap_distance)}
-    maxgap = 0.8
-    groups = [[sorted_boxes[0]]]
 
-    print(groups[-1][-1])
+    #distance varitions between boxes (in y)
+    #y_maxgap = 3
+    y_maxgap = 3
+    groups = [[sorted_boxes[0]]]
     for element in sorted_boxes[1:]:
-        if abs(((element[0]+element[1])/2) - ((groups[-1][-1][0]+groups[-1][-1][1])/2)) <= maxgap:
+        if abs(((element[0]+element[1])/2) - ((groups[-1][-1][0]+groups[-1][-1][1])/2)) <= y_maxgap:
             groups[-1].append(element)
         else:
             groups.append([element])
 
+    final_groups = []
 
-    # una vez teniendo los gropus junto todos sus boxes:
+    # to check by character is 0-3, to check word is 4-10, to check lines is 50+
+    x_maxgap = 5
+
+    for group_section in groups:
+        # sort the groups by X position
+        xgroup_section = sorted(group_section, key=lambda element: (element[2])) 
+        final_groups.append([xgroup_section[0]])
+
+        for element in xgroup_section[1:]:
+            if abs((element[2]) - (final_groups[-1][-1][3])) <= x_maxgap:
+                final_groups[-1].append(element)
+            else:
+                final_groups.append([element])
+    
+
+    # una vez teniendo los gropus junto todos sus boxes: 
     new_list_boxes = []
-    print(len(groups))
-    index  = 0
-    for group_items in groups:
-        ymin = group_items[0][0]
-        ymax = group_items[0][1]
-        xmin = group_items[0][2]
-        xmax = group_items[0][3] 
-        for group in group_items[1:]:
-            if group[0] < ymin:
-                ymin = group[0]
+    for group_items in final_groups:
+        ymin = h
+        ymax = 0
+        xmin = w
+        xmax = 0
+
+        for box in group_items:
+            if box[0] < ymin:
+                ymin = box[0]
             
-            if group[1] > ymax:
-                ymax = group[1]
+            if box[1] > ymax:
+                ymax = box[1]
 
-            if group[2] < xmin:
-                xmin = group[2]
+            if box[2] < xmin:
+                xmin = box[2]
 
-            if group[3] > xmax:
-                xmax = group[3] 
+            if box[3] > xmax:
+                xmax = box[3] 
         
         new_list_boxes.append([ymin, ymax, xmin, xmax])
-        #print(new_list_boxes)
 
+    remove_noicy_boxes(new_list_boxes, False, True)
     return new_list_boxes
-
-
-
-def gouping_boxes(list_boxes):
-    return get_line_box_sections(list_boxes)
 
 ######################Efectos visuales#####################
 
@@ -340,10 +357,10 @@ def DrawSq(img,boxesLst):
     l = int(l)
     h,w,z = img.shape
 
-    a = l-1
+    a = l
     color = (0,255,0)
     for i in range(a):
-        if(i > 0):
+        if(i >= 0):
             if(boxesLst[i][2] < w and boxesLst[i][3] < w and boxesLst[i][0] < h and boxesLst[i][1] < h ):
                 if(boxesLst[i][2] >0 and boxesLst[i][3] >0 and boxesLst[i][0] >0 and boxesLst[i][1] >0 ):
                     p1 = (int(boxesLst[i][2]), int(boxesLst[i][0]))#Noreste
