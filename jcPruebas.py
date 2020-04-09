@@ -43,17 +43,19 @@ boxesLst = udF.boxing(objMtx, nObj)
 boxesLst = udF.boxCleaning(boxesLst,threshold_img)
 print("Boxing done")
 print("--- %s seconds ---" % (time.time() - start_time))
-groupedBoxes = boxesLst
 
-#remove Noicy Boxes
-#boxesLst = udF.remove_noicy_boxes(boxesLst)
-
-groupedBoxes = udF.grouping_boxes(boxesLst, imgColored)
-
-
-imgColored = udF.DrawSq(imgColored,groupedBoxes)
+imgBoxes = np.copy(imgColored)
+imgBoxes = udF.DrawSq(imgBoxes,boxesLst)
 print("Square drawing done")
 print("--- %s seconds ---" % (time.time() - start_time))
+udF.show_image(imgBoxes, "boxes")
+
+# to check by character is 0-2, to check word is 4-10, to check lines is 50+
+#cluster by lines (50)
+groupedBoxes = udF.grouping_boxes(boxesLst, imgColored, 40)
+imgBoxes = udF.DrawSq(imgColored,groupedBoxes)
+print("Cluster done")
+print("--- %s seconds ---" % (time.time() - start_time))
+udF.show_image(imgBoxes, "cluster")
 
 
-udF.show_image(imgColored, "final")

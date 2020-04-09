@@ -3,6 +3,7 @@ import cv2
 import random
 import time
 import math
+from statistics import mode 
     ######################Binarizacion de imagen#####################
 
 def avgF(img, ventana):
@@ -246,38 +247,46 @@ def remove_noicy_boxes(list_boxes, width_check, heigh_check):
     if width_check == True:
         #remove large width objects
         widthSizes = [abs(element[3] - element[2]) for element in list_boxes] 
-        medianX = np.median(widthSizes)
+        medianX = np.mean(widthSizes)
         #desvEstandartX = math.sqrt(np.std(widthSizes))
         list_boxes = [bounding_box for bounding_box in list_boxes if  abs(bounding_box[3] - bounding_box[2]) < medianX*20]
 
-    if width_check == True:
+    if heigh_check == True:
         #remove big and small heigh objects
         heighSizes = [abs(element[1] - element[0]) for element in list_boxes] 
-        medianY = np.median(heighSizes)
+        medianY = np.mean(heighSizes)
         #desvEstandartY = math.sqrt(np.std(heighSizes))
+
         list_boxes = [bounding_box for bounding_box in list_boxes if abs(bounding_box[1] - bounding_box[0]) > medianY/2 and abs(bounding_box[1] - bounding_box[0]) < medianY*2]
 
-    heighSizes = [abs(element[1] - element[0]) for element in list_boxes] 
+
     
     return list_boxes
 
 
 
-def grouping_boxes(list_boxes, img):
+def grouping_boxes(list_boxes, img, x_maxgap):
     h, w, channels = img.shape
 
-    list_boxes = remove_noicy_boxes(list_boxes, True, False)
+    list_boxes = remove_noicy_boxes(list_boxes, width_check=True, heigh_check=False)
     
     # sort by mid point between ymin 
     sorted_boxes = sorted(list_boxes, key=lambda element: ((element[0]+element[1])/2)) 
 
-    # todo fing a better way to get y_maxgap
-    #gap_distance = list((((sorted_boxes[index+1][2]+sorted_boxes[index+1][3])/2) - ((sorted_boxes[index][3]+sorted_boxes[index][2])/2)) for index in range(len(sorted_boxes) - 1))
-    #gap_dictionary = {element: gap_distance.count(element) for element in set(gap_distance)}
+    # get distance between lines
+    y_gap_distance = list((((sorted_boxes[index+1][0]+sorted_boxes[index+1][1])/2) - ((sorted_boxes[index][0]+sorted_boxes[index][1])/2)) for index in range(len(sorted_boxes) - 1))
+    gap_dictionary = {element: y_gap_distance.count(element) for element in set(y_gap_distance)}
+    most_repetead_element = mode(y_gap_distance)
+    y_gap_distance = [value for value in y_gap_distance if value != most_repetead_element]
 
+    print(mode(y_gap_distance))
+    print(np.median(y_gap_distance))
+    print(np.mean(y_gap_distance))
+    print(np.std(y_gap_distance))
+    print(np.sqrt(np.std(y_gap_distance)))
     #distance varitions between boxes (in y)
     #y_maxgap = 3
-    y_maxgap = 3
+    y_maxgap = np.median(y_gap_distance) + np.sqrt(np.std(y_gap_distance))
     groups = [[sorted_boxes[0]]]
     for element in sorted_boxes[1:]:
         if abs(((element[0]+element[1])/2) - ((groups[-1][-1][0]+groups[-1][-1][1])/2)) <= y_maxgap:
@@ -287,8 +296,7 @@ def grouping_boxes(list_boxes, img):
 
     final_groups = []
 
-    # to check by character is 0-3, to check word is 4-10, to check lines is 50+
-    x_maxgap = 5
+    
 
     for group_section in groups:
         # sort the groups by X position
