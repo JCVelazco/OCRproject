@@ -35,7 +35,6 @@ print("--- %s seconds ---" % (time.time() - start_time))
 imgColored = udF.rgbObjColor(objMtx,nObj)
 print("Coloring done")
 print("--- %s seconds ---" % (time.time() - start_time))
-
 #udF.show_image(imgColored, "coloreada")
 
 #Boxing de OBJETOS
@@ -43,6 +42,9 @@ boxesLst = udF.boxing(objMtx, nObj)
 boxesLst = udF.boxCleaning(boxesLst,threshold_img)
 print("Boxing done")
 print("--- %s seconds ---" % (time.time() - start_time))
+
+print("Wait")
+print(boxesLst[0])
 
 imgBoxes = np.copy(imgColored)
 imgBoxes = udF.DrawSq(imgBoxes,boxesLst)
