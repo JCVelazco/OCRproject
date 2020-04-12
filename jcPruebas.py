@@ -8,11 +8,11 @@ sys.setrecursionlimit(120000000)
 start_time = time.time()
 
 #-Obtención de la imagen de prueba
-#img = cv2.imread('ImagenesProyecto/TextoRecto.jpg',0)
-img = cv2.imread('ImagenesProyecto/Texto Luz Blanca.jpg',0)
+img = cv2.imread('ImagenesProyecto/TextoRecto.jpg',0)
+#img = cv2.imread('ImagenesProyecto/Texto Luz Blanca.jpg',0)
 #img = cv2.imread('ImagenesProyecto/hola_como_estas.jpeg',0)
 #img = cv2.imread('ImagenesProyecto/texto_prueba.jpg',0)
-img = udF.imgRS(img,0.25) #Este resize está solo para hacer más rápidas las pruebas.
+img = udF.imgRS(img,0.6) #Este resize está solo para hacer más rápidas las pruebas.
 
 
 
@@ -38,14 +38,14 @@ print("--- %s seconds ---" % (time.time() - start_time))
 #udF.show_image(imgColored, "coloreada")
 
 #Boxing de OBJETOS
-boxesLst = udF.boxing(objMtx, nObj)
-boxesLst = udF.boxCleaning(boxesLst,threshold_img)
+boxesLst = udF.boxing2(objMtx, nObj, threshold_img)
 print("Boxing done")
 print("--- %s seconds ---" % (time.time() - start_time))
 
 print("Wait")
 print(boxesLst[0])
 
+print(type(boxesLst[0]))
 imgBoxes = np.copy(imgColored)
 imgBoxes = udF.DrawSq(imgBoxes,boxesLst)
 print("Square drawing done")

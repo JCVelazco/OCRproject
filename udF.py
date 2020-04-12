@@ -7,11 +7,22 @@ import math
 from statistics import mode #most frequent number
 
 class CropBox(object):
-    def __init__(self, number,xmin,xmax,ymin,ymax):
-        self.number = number
+    def __init__(self,xmin,xmax,ymin,ymax):
         self.xmin = xmin
         self.xmax = xmax
         self.ymin = ymin
+        self.ymax = ymax
+
+    def set_xmin(self, xmin):
+        self.xmin = xmin
+    
+    def set_xmax(self, xmax):
+        self.xmax = xmax
+    
+    def set_ymin(self, ymin):
+        self.ymin = ymin
+
+    def set_ymax(self, ymax):
         self.ymax = ymax
 
 
@@ -176,6 +187,30 @@ def objectFinder(img,tag,i,j,objFnd,depthCounter,limit):
 
     return objFnd, depthCounter #subFunción de objSrch2
 
+def boxing2(objMtx,objNums, img):
+    h_real, w_real =  img.shape
+    h,w = objMtx.shape
+    objsBxd = []
+    
+    for i in range (objNums):
+        objsBxd.append(CropBox(0,0,0,0))
+
+    for i in range(h):
+        for j in range(w):
+            if objMtx[i,j] != 0:
+                index = int(objMtx[i,j])
+                if objsBxd[index].ymin == 0:
+                    objsBxd[index].ymin = i
+                    objsBxd[index].xmin = j
+                else:
+                    if i > objsBxd[index].ymax:
+                        objsBxd[index].set_ymax(i) #Posicion para i mas grande
+                    if j > objsBxd[index].xmax:
+                        objsBxd[index].set_xmax(j) #posicion para j mas grande
+                    elif j < objsBxd[index].xmin:
+                        objsBxd[index].set_xmin(j) #posicion para j mas chica
+    return objsBxd
+
 def boxing(objMtx,objNums):
     h,w = objMtx.shape
     objsBxd = np.zeros((objNums + 1,4)) # Filas arriba, Fila abajo, Columna izq, Columna derecha en orden de las columnas 0 -> 3
@@ -210,23 +245,24 @@ def boxCleaning(boxesLst,img):
                 cE = cE + 1
 
     return realBoxes #esto quita casos extraños donde se apuntaba a posiciones extrañas de la imagen.
-def remove_noicy_boxes(list_boxes, width_check, heigh_check):
 
+    return realBoxes #esto quita casos extraños donde se apuntaba a posiciones extrañas de la imagen.
+def remove_noicy_boxes(list_boxes, width_check, heigh_check):
     # delete all the ones that are less of the medium high/width
     if width_check == True:
         #remove large width objects
-        widthSizes = [abs(element[3] - element[2]) for element in list_boxes] 
+        widthSizes = [abs(list_boxes[index].xmax - list_boxes[index].xmin) for index in range(len(list_boxes))] 
         medianX = np.mean(widthSizes)
         #desvEstandartX = math.sqrt(np.std(widthSizes))
-        list_boxes = [bounding_box for bounding_box in list_boxes if  abs(bounding_box[3] - bounding_box[2]) < medianX*20]
+        list_boxes = [bounding_box for bounding_box in list_boxes if  abs(bounding_box.xmax - bounding_box.xmin) < medianX*20]
 
     if heigh_check == True:
         #remove big and small heigh objects
-        heighSizes = [abs(element[1] - element[0]) for element in list_boxes] 
+        heighSizes = [abs(list_boxes[index].ymax - list_boxes[index].ymin) for index in range(len(list_boxes))] 
         medianY = np.mean(heighSizes)
         #desvEstandartY = math.sqrt(np.std(heighSizes))
 
-        list_boxes = [bounding_box for bounding_box in list_boxes if abs(bounding_box[1] - bounding_box[0]) > medianY/2 and abs(bounding_box[1] - bounding_box[0]) < medianY*2]
+        list_boxes = [bounding_box for bounding_box in list_boxes if abs(bounding_box.ymax - bounding_box.ymin) > medianY/2 and abs(bounding_box.ymax - bounding_box.ymin) < medianY*2]
 
     return list_boxes
 
@@ -234,13 +270,14 @@ def remove_noicy_boxes(list_boxes, width_check, heigh_check):
 def grouping_boxes(list_boxes, img, x_maxgap):
     h, w, channels = img.shape
 
+
     list_boxes = remove_noicy_boxes(list_boxes, width_check=True, heigh_check=False)
     
     # sort by mid point between ymin 
-    sorted_boxes = sorted(list_boxes, key=lambda element: ((element[0]+element[1])/2)) 
+    sorted_boxes = sorted(list_boxes, key=lambda element: ((element.ymin+element.ymax)/2)) 
 
     # get distance between lines
-    y_gap_distance = list((((sorted_boxes[index+1][0]+sorted_boxes[index+1][1])/2) - ((sorted_boxes[index][0]+sorted_boxes[index][1])/2)) for index in range(len(sorted_boxes) - 1))
+    y_gap_distance = list((((sorted_boxes[index+1].ymin+sorted_boxes[index+1].ymax)/2) - ((sorted_boxes[index].ymin+sorted_boxes[index].ymax)/2)) for index in range(len(sorted_boxes) - 1))
     gap_dictionary = {element: y_gap_distance.count(element) for element in set(y_gap_distance)}
     most_repetead_element = mode(y_gap_distance)
     y_gap_distance = [value for value in y_gap_distance if value != most_repetead_element]
@@ -258,7 +295,7 @@ def grouping_boxes(list_boxes, img, x_maxgap):
 
     groups = [[sorted_boxes[0]]]
     for element in sorted_boxes[1:]:
-        if abs(((element[0]+element[1])/2) - ((groups[-1][-1][0]+groups[-1][-1][1])/2)) <= y_maxgap:
+        if abs(((element.ymin+element.ymax)/2) - ((groups[-1][-1].ymin+groups[-1][-1].ymax)/2)) <= y_maxgap:
             groups[-1].append(element)
         else:
             groups.append([element])
@@ -269,11 +306,11 @@ def grouping_boxes(list_boxes, img, x_maxgap):
 
     for group_section in groups:
         # sort the groups by X position
-        xgroup_section = sorted(group_section, key=lambda element: (element[2])) 
+        xgroup_section = sorted(group_section, key=lambda element: (element.xmin)) 
         final_groups.append([xgroup_section[0]])
 
         for element in xgroup_section[1:]:
-            if abs((element[2]) - (final_groups[-1][-1][3])) <= x_maxgap:
+            if abs((element.xmin) - (final_groups[-1][-1].xmax)) <= x_maxgap:
                 final_groups[-1].append(element)
             else:
                 final_groups.append([element])
@@ -288,19 +325,19 @@ def grouping_boxes(list_boxes, img, x_maxgap):
         xmax = 0
 
         for box in group_items:
-            if box[0] < ymin:
-                ymin = box[0]
+            if box.ymin < ymin:
+                ymin = box.ymin
             
-            if box[1] > ymax:
-                ymax = box[1]
+            if box.ymax > ymax:
+                ymax = box.ymax
 
-            if box[2] < xmin:
-                xmin = box[2]
+            if box.xmin < xmin:
+                xmin = box.xmin
 
-            if box[3] > xmax:
-                xmax = box[3] 
+            if box.xmax > xmax:
+                xmax = box.xmax 
         
-        new_list_boxes.append([ymin, ymax, xmin, xmax])
+        new_list_boxes.append(CropBox(xmin, xmax, ymin, ymax))
 
     remove_noicy_boxes(new_list_boxes, False, True)
     return new_list_boxes
