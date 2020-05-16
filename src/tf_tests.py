@@ -22,12 +22,12 @@ class FilePaths:
     fnCharList = '../model/charList.txt'
     fnAccuracy = '../model/accuracy.txt'
     fnTrain = '../data/'
-    fnInfer = '..data/test.pmg'
+    fnInfer = '..data/test.png'
     fnCorpus = '../data/corpus.txt'
 
 def train(model, loader):
     "Train NN"
-    epoch = 10 # number of training epochs since start
+    epoch = 0 # number of training epochs since start
     bestCharErrorRate = float('inf') # best validation character error rate
     noImprovementSince = 0 # number of epochs no improvement of character error rate occurred
     earlyStopping = 6 # stop training after this number of epochs without improvement
@@ -84,14 +84,14 @@ def validate(model, loader):
             numWordOK += 1 if batch.gtTexts[i] == recognized[i] else 0
             numWordTotal += 1
             dist = editdistance.eval(recognized[i], batch.gtTexts[i])
-            numcharErr += dist
+            numCharErr += dist
             numCharTotal += len(batch.gtTexts[i])
             print('[OK]' if dist == 0 else '[ERR:%d]' % dist, '""' + batch.gtTexts[i] + '""', '->', '""' + recognized[i] + '""')
 
     # print validation result
     charErrorRate = numCharErr / numCharTotal
     wordAccuracy = numWordOK/ numWordTotal
-    print('Character error rate %f%. Word accuracy: %f%.' % (charErrorRate*100.0, wordAccuracy*100.0))
+    print('Character error rate %f%%. Word accuracy: %f%%.' % (charErrorRate*100.0, wordAccuracy*100.0))
     return charErrorRate
 
 def infer(model, fnImg):
@@ -144,11 +144,11 @@ def main():
     # infer text on test image
     else:
         print(open(FilePaths.fnAccuracy).read)
-        model = Model(open(FilePaths.fnCharList).read(), decoderType, mustRestore=True, dump=ards.dump)
+        model = Model(open(FilePaths.fnCharList).read(), decoderType, mustRestore=True, dump=args.dump)
         infer(model, FilePaths.fnInfer)
 
-    cv2.imshow("Output", cv2.imread(FilePaths.fnInfer, cv2.IMREAD_GRAYSCALE))
-    cv2.waitKey(0)
+    # cv2.imshow("Output", cv2.imread(FilePaths.fnInfer, cv2.IMREAD_GRAYSCALE))
+    # cv2.waitKey(0)
 
 if __name__ == '__main__':
     main()

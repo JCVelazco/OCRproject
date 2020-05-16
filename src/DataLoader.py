@@ -69,7 +69,7 @@ class DataLoader:
             print("Expected damaged images: ", bad_samples_reference)
 
         # split set to training and validation subsets: 95% - 5%
-        splitIndex = int(0.25*len(self.samples))
+        splitIndex = int(0.95*len(self.samples))
         self.trainSamples = self.samples[:splitIndex]
         self.validationSamples = self.samples[splitIndex:]
 
@@ -89,7 +89,7 @@ class DataLoader:
     def truncateLabel(self, text, maxTxtLen):
         # ctc loss can't compute loss if it cannot find a mapping between text label and input
         # labels. Repeated letters cost double because of the blank symbol needing to be inserted.
-        # If a too-long label is provided, ctc returns an infinit gradient
+        # If a too-long label is provided, ctc returns an infinite gradient
         cost = 0
         for i in range(len(text)):
             if i != 0 and text[i] == text[i-1]:

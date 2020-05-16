@@ -159,7 +159,7 @@ def preprocess(img, imgSize, dataAugmentation=False):
     "Put img into target img of size imgSize, transpose for TF and binarize it."
 
     if img is None:
-        img = np,zeros([imgSize[1],[0]])
+        img = np.zeros([imgSize[1], imgSize[0]])
 
     # increase datset size by applying random stretches to the images
     if dataAugmentation:

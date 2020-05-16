@@ -32,7 +32,7 @@ class Model:
         self.charList = charList
         self.decoderType = decoderType
         self.mustRestore = mustRestore
-        self.mustRestore = 0
+        self.snapID = 0
 
         # Whether to use normalization over a batch or population
         self.is_train = tf.placeholder(tf.bool, name='is_train')
@@ -142,7 +142,7 @@ class Model:
         sess = tf.Session() # Tf session
 
         saver = tf.train.Saver(max_to_keep=1) # saves model to file
-        modelDir = '../models/'
+        modelDir = '../model/'
         latestSnapshot = tf.train.latest_checkpoint(modelDir)
 
         # model must be restored for inference, there must be a snapshot
@@ -276,4 +276,4 @@ class Model:
     def save(self):
         "Save model to file"
         self.snapID +=1
-        self.saver.save(self.sess, 'model/snapshot', global_step = self.snapID)
+        self.saver.save(self.sess, '../model/snapshot', global_step = self.snapID)
