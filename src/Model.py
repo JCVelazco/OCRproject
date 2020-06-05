@@ -124,7 +124,7 @@ class Model:
         elif self.decoderType == DecoderType.WordBeamSearch:
             # import compiled word beam search operation see https://github.com/githubharald/CTCWordBeamSearch
             word_beam_search_module = tf.load_op_library('TFWordBeamSearch.so')
-
+            # diccionarioop
             # prepare info about lang (dictionary, characters in dataset, characters forming words)
             chars = str().join(self.charList)
             wordChars = open('../model/wordCharList.txt').read().splitlines()[0]

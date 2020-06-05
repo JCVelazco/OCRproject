@@ -8,10 +8,10 @@ sys.setrecursionlimit(120000000)
 start_time = time.time()
 
 #-Obtención de la imagen de prueba
-img = cv2.imread('ImagenesProyecto/TextoRecto.jpg',0)
+#img = cv2.imread('ImagenesProyecto/TextoRecto.jpg',0)
 #img = cv2.imread('ImagenesProyecto/Texto Luz Blanca.jpg',0)
 #img = cv2.imread('ImagenesProyecto/hola_como_estas.jpeg',0)
-#img = cv2.imread('ImagenesProyecto/texto_prueba.jpg',0)
+img = cv2.imread('ImagenesProyecto/texto_prueba.jpg',0)
 img = udF.imgRS(img,0.6) #Este resize está solo para hacer más rápidas las pruebas.
 
 
@@ -54,7 +54,7 @@ udF.show_image(imgBoxes, "boxes")
 
 # to check by character is 0-2, to check word is 4-10, to check lines is 50+
 #cluster by lines (50)
-groupedBoxes = udF.grouping_boxes(boxesLst, imgColored, 40)
+groupedBoxes = udF.grouping_boxes(boxesLst, imgColored, 4)
 imgBoxes = udF.DrawSq(imgColored,groupedBoxes)
 print("Cluster done")
 print("--- %s seconds ---" % (time.time() - start_time))
