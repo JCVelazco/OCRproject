@@ -61,9 +61,9 @@ class Model:
         cnnIn4d = tf.expand_dims(input=self.inputImgs, axis=3)
 
         # parameter for the layers
-        kernelVals = [5, 5, 5, 3, 3, 3, 3]
-        featureVals = [1, 32, 32, 64, 64, 128, 128, 256]
-        strideVals = poolVals = [(2,2), (2,2), (1,2), (1,2), (1,2), (1,1), (1,1)]
+        kernelVals = [5, 5, 3, 3, 3]
+        featureVals = [1, 32, 64, 128, 128, 256]
+        strideVals = poolVals = [(2,2), (2,2), (1,2), (1,2), (1,2)]
         numLayers = len(strideVals)
 
         # layers
@@ -124,7 +124,7 @@ class Model:
         elif self.decoderType == DecoderType.WordBeamSearch:
             # import compiled word beam search operation see https://github.com/githubharald/CTCWordBeamSearch
             word_beam_search_module = tf.load_op_library('TFWordBeamSearch.so')
-
+            # diccionarioop
             # prepare info about lang (dictionary, characters in dataset, characters forming words)
             chars = str().join(self.charList)
             wordChars = open('../model/wordCharList.txt').read().splitlines()[0]

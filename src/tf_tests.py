@@ -22,7 +22,7 @@ class FilePaths:
     fnCharList = '../model/charList.txt'
     fnAccuracy = '../model/accuracy.txt'
     fnTrain = '../data/'
-    fnInfer = '..data/test.png'
+    fnInfer = '../data/test.png'
     fnCorpus = '../data/corpus.txt'
 
 def train(model, loader):
@@ -94,6 +94,7 @@ def validate(model, loader):
     print('Character error rate %f%%. Word accuracy: %f%%.' % (charErrorRate*100.0, wordAccuracy*100.0))
     return charErrorRate
 
+# call this func !!!!!!!!!
 def infer(model, fnImg):
     "Recgonize text in image provided by file path"
     img = preprocess(cv2.imread(fnImg, cv2.IMREAD_GRAYSCALE), Model.imgSize)
@@ -120,7 +121,7 @@ def main():
     if args.beamsearch:
         decoderType = DecoderType.BeamSearch
     elif args.wordbeamsearch:
-        decoderType = DecoderType.W|ordBeamSearch
+        decoderType = DecoderType.WordBeamSearch
 
     # train of validate IAM dataset
     if args.train or args.validate:
@@ -143,6 +144,7 @@ def main():
 
     # infer text on test image
     else:
+        # estoooooooooooooo
         print(open(FilePaths.fnAccuracy).read)
         model = Model(open(FilePaths.fnCharList).read(), decoderType, mustRestore=True, dump=args.dump)
         infer(model, FilePaths.fnInfer)
