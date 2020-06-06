@@ -127,8 +127,8 @@ class Model:
             # diccionarioop
             # prepare info about lang (dictionary, characters in dataset, characters forming words)
             chars = str().join(self.charList)
-            wordChars = open('../model/wordCharList.txt').read().splitlines()[0]
-            corpus = open('../data/corpus.txt').read()
+            wordChars = open('./model/wordCharList.txt').read().splitlines()[0]
+            corpus = open('./data/corpus.txt').read()
 
             # decode using the "words" mode of beam search
             self.decoder = word_beam_search_module.word_beam_search(tf.nn.softmax(self.ctcIn3dTBC, dim=2), 50, 'Words', 0.0, corpus.encode('utf8'), chars.encode('utf8'), wordChars.encode('utf8'))
@@ -142,7 +142,7 @@ class Model:
         sess = tf.Session() # Tf session
 
         saver = tf.train.Saver(max_to_keep=1) # saves model to file
-        modelDir = '../model/'
+        modelDir = './model/'
         latestSnapshot = tf.train.latest_checkpoint(modelDir)
 
         # model must be restored for inference, there must be a snapshot
@@ -226,7 +226,7 @@ class Model:
 
     def dumpNNOutput(self, rnnOutput):
         "Dump output of the NN to CSV files"
-        dumpDir = '../dump/'
+        dumpDir = './dump/'
         if not os.path.isdir(dumpDir):
             os.mkdir(dumpDir)
 

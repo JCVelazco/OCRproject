@@ -155,6 +155,21 @@ def imgSynth(img1,img2,img3,img4,img5): #convierte los 5 niblacks en una sola im
 
 ####################### image preprocessing for NN #############################
 
+def preprocess2(img, imgSize):
+    (wt, ht) = imgSize
+    (h, w) = img.shape
+    fx = w/wt
+    fy = h/ht
+    f = max(fx,fy)
+    newSize = (max(min(wt, int(w/f)), 1), max(min(ht, int(h/f)), 1)) # scale according to f (result at least 1 and at most wt or ht)
+    img = cv2.resize(img, newSize)
+    target = np.ones([ht, wt])*255
+    target[0:newSize[1], 0:newSize[0]] = img
+    # TF needs imag transposed
+    img = cv2.transpose(target)
+    #  binarize
+    return 255-img
+
 def preprocess(img, imgSize, dataAugmentation=False):
     "Put img into target img of size imgSize, transpose for TF and binarize it."
 

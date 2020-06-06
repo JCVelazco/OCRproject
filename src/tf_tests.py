@@ -3,6 +3,7 @@
 from __future__ import division
 from __future__ import print_function
 
+import numpy as np
 import sys
 import os
 ros_path = '/opt/ros/kinetic/lib/python2.7/dist-packages'
@@ -15,15 +16,17 @@ import editdistance
 from DataLoader import DataLoader, Batch
 from Model import Model, DecoderType
 
+
 from utils import preprocess
+from utils import preprocess2
 
 class FilePaths:
     "Filenames and paths to data"
-    fnCharList = '../model/charList.txt'
-    fnAccuracy = '../model/accuracy.txt'
-    fnTrain = '../data/'
-    fnInfer = '../data/test.png'
-    fnCorpus = '../data/corpus.txt'
+    fnCharList = './model/charList.txt'
+    fnAccuracy = './model/accuracy.txt'
+    fnTrain = './data/'
+    fnInfer = './data/test.png'
+    fnCorpus = './data/corpus.txt'
 
 def train(model, loader):
     "Train NN"
@@ -98,10 +101,27 @@ def validate(model, loader):
 def infer(model, fnImg):
     "Recgonize text in image provided by file path"
     img = preprocess(cv2.imread(fnImg, cv2.IMREAD_GRAYSCALE), Model.imgSize)
+    print(img.shape)
+
+    cv2.imshow("test", img)
+    print("Click any key for next computation...")
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
     batch = Batch(None, [img])
     (recognized, probability) = model.inferBatch(batch, True)
     print('Recognized:', '""' + recognized[0] + '""')
     print('Probability: ', probability[0])
+
+def classify(model, img):
+    print(img.shape)
+    img = cv2.resize(img, Model.imgSize)
+    img = preprocess2(img, Model.imgSize)
+    batch = Batch(None, [img])
+    (recognized, probability) = model.inferBatch(batch, True)
+    print('Recognized:', '""' + recognized[0] + '""')
+    print('Probability: ', probability[0])
+    return (probability[0], recognized[0])
 
 
 def main():
@@ -151,6 +171,13 @@ def main():
 
     # cv2.imshow("Output", cv2.imread(FilePaths.fnInfer, cv2.IMREAD_GRAYSCALE))
     # cv2.waitKey(0)
+
+def generate_model():
+    decoderType = DecoderType.BestPath
+    return Model(open(FilePaths.fnCharList).read(), decoderType, mustRestore=True)
+
+def call_classify(img, model):
+    return classify(model, img)
 
 if __name__ == '__main__':
     main()

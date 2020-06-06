@@ -4,7 +4,10 @@ import cv2
 import random
 import time
 import math
-from statistics import mode #most frequent number
+import sys
+sys.path.append('D:/Jc/Documents/GitHub/vision/OCRproject/src')
+import tf_tests
+from spellchecker import SpellChecker
 
 class CropBox(object):
     def __init__(self,xmin,xmax,ymin,ymax):
@@ -44,6 +47,9 @@ def imgRS(img, factor):
 def wolf(img, blockSize, k):
     result = cv2.ximgproc.niBlackThreshold(img, 255, cv2.THRESH_BINARY_INV, blockSize, k, binarizationMethod=cv2.ximgproc.BINARIZATION_WOLF)
     return result
+
+def invert(image):
+    return (255-image)
 
 def niblack(img, ventana, k):
     rad = int((ventana-1)/2)
@@ -248,50 +254,61 @@ def boxCleaning(boxesLst,img):
 
     return realBoxes #esto quita casos extraños donde se apuntaba a posiciones extrañas de la imagen.
 def remove_noicy_boxes(list_boxes, width_check, heigh_check):
+
+    final_list = []
     # delete all the ones that are less of the medium high/width
     if width_check == True:
         #remove large width objects
         widthSizes = [abs(list_boxes[index].xmax - list_boxes[index].xmin) for index in range(len(list_boxes))] 
         medianX = np.mean(widthSizes)
         #desvEstandartX = math.sqrt(np.std(widthSizes))
-        list_boxes = [bounding_box for bounding_box in list_boxes if  abs(bounding_box.xmax - bounding_box.xmin) < medianX*20]
+        final_list += [bounding_box for bounding_box in list_boxes if  abs(bounding_box.xmax - bounding_box.xmin) < medianX*20]
 
     if heigh_check == True:
         #remove big and small heigh objects
         heighSizes = [abs(list_boxes[index].ymax - list_boxes[index].ymin) for index in range(len(list_boxes))] 
         medianY = np.mean(heighSizes)
-        #desvEstandartY = math.sqrt(np.std(heighSizes))
 
-        list_boxes = [bounding_box for bounding_box in list_boxes if abs(bounding_box.ymax - bounding_box.ymin) > medianY/2 and abs(bounding_box.ymax - bounding_box.ymin) < medianY*2]
+        final_list += [bounding_box for bounding_box in list_boxes if abs(bounding_box.ymax - bounding_box.ymin) > medianY/2 and abs(bounding_box.ymax - bounding_box.ymin) < medianY*2] 
 
-    return list_boxes
+    return final_list
 
 
-def grouping_boxes(list_boxes, img, x_maxgap):
+def grouping_boxes(list_boxes, img):
     h, w, channels = img.shape
 
 
     list_boxes = remove_noicy_boxes(list_boxes, width_check=True, heigh_check=False)
     
-    # sort by mid point between ymin 
-    sorted_boxes = sorted(list_boxes, key=lambda element: ((element.ymin+element.ymax)/2)) 
 
-    # get distance between lines
+    # get distance between words in X
+    sorted_boxes = sorted(list_boxes, key=lambda element: (element.xmax)) 
+    x_gap_distance = list((((sorted_boxes[index+1].xmin+sorted_boxes[index+1].xmax)/2) - ((sorted_boxes[index].xmin+sorted_boxes[index].xmax)/2)) for index in range(len(sorted_boxes) - 1))
+    gap_dictionary = {element: x_gap_distance.count(element) for element in set(x_gap_distance)}
+    if len(set(x_gap_distance)) != len(x_gap_distance):
+        most_repetead_element = max(set(x_gap_distance), key = x_gap_distance.count) 
+    else:
+        most_repetead_element = -1
+    x_gap_distance = [value for value in x_gap_distance if value != most_repetead_element]    
+    x_maxgap = np.mean(x_gap_distance)
+
+
+
+
+
+    # get distance between lines in Y
+    sorted_boxes = sorted(list_boxes, key=lambda element: ((element.ymin+element.ymax)/2)) 
     y_gap_distance = list((((sorted_boxes[index+1].ymin+sorted_boxes[index+1].ymax)/2) - ((sorted_boxes[index].ymin+sorted_boxes[index].ymax)/2)) for index in range(len(sorted_boxes) - 1))
     gap_dictionary = {element: y_gap_distance.count(element) for element in set(y_gap_distance)}
-    most_repetead_element = mode(y_gap_distance)
+    if len(set(y_gap_distance)) != len(y_gap_distance):
+        most_repetead_element = max(set(y_gap_distance), key = y_gap_distance.count) 
+    else:
+        most_repetead_element = -1
     y_gap_distance = [value for value in y_gap_distance if value != most_repetead_element]
-
-    #print(mode(y_gap_distance))
-    #print(np.median(y_gap_distance))
-    #print(np.mean(y_gap_distance))
-    #print(np.std(y_gap_distance))
-    #print(np.sqrt(np.std(y_gap_distance)))
-    #distance varitions between boxes (in y)
-    #y_maxgap = 3
-
-    #we need a better way to get this...
     y_maxgap = np.median(y_gap_distance) + np.sqrt(np.std(y_gap_distance))
+
+
+
 
     groups = [[sorted_boxes[0]]]
     for element in sorted_boxes[1:]:
@@ -338,8 +355,8 @@ def grouping_boxes(list_boxes, img, x_maxgap):
                 xmax = box.xmax 
         
         new_list_boxes.append(CropBox(xmin, xmax, ymin, ymax))
+    new_list_boxes = remove_noicy_boxes(new_list_boxes, False, True)
 
-    remove_noicy_boxes(new_list_boxes, False, True)
     return new_list_boxes
 
 
@@ -415,4 +432,23 @@ def show_image(img, name):
     print("Click any key for next computation...")
     cv2.waitKey(0)
     cv2.destroyAllWindows()
+
+# CLASSIFICATION
+
+def predict(list_boxes, img):
+    sentence = []
+    model = tf_tests.generate_model()
+    for box in list_boxes:
+        crop_img = img[box.ymin:box.ymax, box.xmin:box.xmax]
+        if(box.ymin != box.ymax or box.xmax != box.xmin):
+            res = tf_tests.call_classify(crop_img, model)
+            sentence.append(res)
+
+    spell = SpellChecker()
+    sentence = [spell.correction(word[1]) if word[0] < 0.75 else word[1] for word in sentence]
+
+    print("Prediction:")
+    for element in sentence:
+        print(element)
+
 

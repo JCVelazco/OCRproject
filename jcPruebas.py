@@ -8,10 +8,9 @@ sys.setrecursionlimit(120000000)
 start_time = time.time()
 
 #-Obtención de la imagen de prueba
-#img = cv2.imread('ImagenesProyecto/TextoRecto.jpg',0)
-#img = cv2.imread('ImagenesProyecto/Texto Luz Blanca.jpg',0)
-#img = cv2.imread('ImagenesProyecto/hola_como_estas.jpeg',0)
-img = cv2.imread('ImagenesProyecto/texto_prueba.jpg',0)
+#img = cv2.imread('ImagenesProyecto/test2.jpg', cv2.IMREAD_GRAYSCALE)
+img = cv2.imread('ImagenesProyecto/test1.jpg', cv2.IMREAD_GRAYSCALE)
+
 img = udF.imgRS(img,0.6) #Este resize está solo para hacer más rápidas las pruebas.
 
 
@@ -54,10 +53,16 @@ udF.show_image(imgBoxes, "boxes")
 
 # to check by character is 0-2, to check word is 4-10, to check lines is 50+
 #cluster by lines (50)
-groupedBoxes = udF.grouping_boxes(boxesLst, imgColored, 4)
+groupedBoxes = udF.grouping_boxes(boxesLst, imgColored)
 imgBoxes = udF.DrawSq(imgColored,groupedBoxes)
 print("Cluster done")
 print("--- %s seconds ---" % (time.time() - start_time))
 udF.show_image(imgBoxes, "cluster")
 
 
+
+print(f"I have {len(groupedBoxes)} groups of boxes (possible words)")
+print('Prediction starts')
+# the classifier was trained with images with text in black and background in white
+udF.predict(groupedBoxes, udF.invert(threshold_img))
+udF.show_image(imgBoxes, "cluster")
