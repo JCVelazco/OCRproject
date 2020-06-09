@@ -12,8 +12,8 @@ Finalmente, en el apartado de "efectos visuales", se añaden cosas como el dibuj
 
 To run the project:
 
-Clone it
-cd Ocrproject
-python pruebasFinales.py
+- Clone it
+- cd Ocrproject
+- python pruebasFinales.py
 
 Enjoy :D
